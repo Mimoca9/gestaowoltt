@@ -2837,6 +2837,35 @@
             </div>`;
     }
 
+
+    function imprimirJanelaWoltt(printWindow, atraso = 900) {
+        if(!printWindow) {
+            alert('❌ O navegador bloqueou a janela de impressão. Permite pop-ups para esta página.');
+            return;
+        }
+
+        printWindow.document.close();
+
+        const executarPrint = () => {
+            try {
+                printWindow.focus();
+                printWindow.print();
+            } catch(erro) {
+                console.error('Erro ao imprimir:', erro);
+                alert('❌ Não foi possível abrir a impressão neste navegador.');
+            }
+        };
+
+        // No computador, o Chrome/Edge pode abrir a pré-visualização antes de terminar
+        // de desenhar o HTML da janela about:blank. Este atraso evita folhas brancas.
+        if(printWindow.document.readyState === 'complete') {
+            setTimeout(executarPrint, atraso);
+        } else {
+            printWindow.onload = () => setTimeout(executarPrint, atraso);
+            setTimeout(executarPrint, atraso + 600);
+        }
+    }
+
     function imprimirEstruturas(id) {
         let proj = projetos.find(p=>p.id===id);
         if(!proj) { alert('Projeto não encontrado.'); return; }
@@ -2904,10 +2933,11 @@
         td:last-child, th:last-child { text-align: right; font-weight: 800; }
         .total-row td { background: #f4f9fc; color: #08263a; font-weight: 900; }
         .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #dce9f0; display: flex; justify-content: space-between; color: #60758a; font-size: 10px; }
+        @page { size: A4 portrait; margin: 10mm; }
         @media print {
-            body { background: #fff; }
-            .page { width: auto; min-height: auto; margin: 0; padding: 10mm; }
-            .print-section, .tri-print-card { break-inside: avoid; }
+            html, body { width: 210mm; min-height: 297mm; background: #fff !important; margin: 0 !important; padding: 0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .page { width: 190mm !important; min-height: auto !important; margin: 0 auto !important; padding: 0 !important; box-shadow: none !important; }
+            .print-section, .tri-print-card { break-inside: avoid; page-break-inside: avoid; }
         }
     </style>
 </head>
@@ -2939,9 +2969,7 @@
     </main>
 </body>
 </html>`);
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => printWindow.print(), 700);
+        imprimirJanelaWoltt(printWindow, 900);
     }
 
     function imprimirProjeto(id) {
@@ -3078,10 +3106,11 @@
         .category-row td { background: #f4f9fc; color: #08263a; font-weight: 900; text-transform: uppercase; }
         .empty-text { margin: 0; padding: 10px; border: 1px dashed #cbdbe6; border-radius: 10px; color: #60758a; }
         .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #dce9f0; display: flex; justify-content: space-between; color: #60758a; font-size: 10px; }
+        @page { size: A4 portrait; margin: 10mm; }
         @media print {
-            body { background: #fff; }
-            .page { width: auto; min-height: auto; margin: 0; padding: 10mm; }
-            .print-section { break-inside: avoid; }
+            html, body { width: 210mm; min-height: 297mm; background: #fff !important; margin: 0 !important; padding: 0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .page { width: 190mm !important; min-height: auto !important; margin: 0 auto !important; padding: 0 !important; box-shadow: none !important; }
+            .print-section { break-inside: avoid; page-break-inside: avoid; }
         }
     </style>
 </head>
@@ -3165,9 +3194,7 @@
     </main>
 </body>
 </html>`);
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => printWindow.print(), 900);
+        imprimirJanelaWoltt(printWindow, 1000);
     }
 
     function mostrarTab(tab) {
