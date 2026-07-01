@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>WOLTT · Gestão de Projetos Fotovoltaicos · v62</title>
+    <title>WOLTT · Gestão de Projetos Fotovoltaicos · v65</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2838,32 +2838,64 @@
     }
 
 
+    function imprimirHTMLWoltt(html, atraso = 700) {
+        // Impressão robusta para versão online: evita pop-ups about:blank e imprime por iframe invisível.
+        // Em alguns alojamentos, window.open('', '_blank') abre mas o Chrome imprime a página antes do HTML ficar pronto.
+        const iframeAntigo = document.getElementById('woltt_print_iframe');
+        if(iframeAntigo) iframeAntigo.remove();
+
+        const iframe = document.createElement('iframe');
+        iframe.id = 'woltt_print_iframe';
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = '0';
+        iframe.style.opacity = '0';
+        iframe.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(iframe);
+
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(html);
+        doc.close();
+
+        const executarPrint = () => {
+            try {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+                setTimeout(() => iframe.remove(), 60000);
+            } catch(erro) {
+                console.error('Erro ao imprimir por iframe:', erro);
+                // Fallback para navegadores que bloqueiam impressão em iframe.
+                const w = window.open('', '_blank');
+                if(!w) {
+                    alert('❌ O navegador bloqueou a impressão. Permite pop-ups para esta página ou usa Ctrl+P depois de abrir o relatório.');
+                    return;
+                }
+                w.document.open();
+                w.document.write(html);
+                w.document.close();
+                setTimeout(() => {
+                    try { w.focus(); w.print(); } catch(e) { alert('❌ Não foi possível abrir a impressão neste navegador.'); }
+                }, atraso + 500);
+            }
+        };
+
+        iframe.onload = () => setTimeout(executarPrint, atraso);
+        // Segurança extra para alojamentos onde o evento onload do iframe não dispara.
+        setTimeout(executarPrint, atraso + 1200);
+    }
+
     function imprimirJanelaWoltt(printWindow, atraso = 900) {
+        // Mantida apenas por compatibilidade com versões antigas.
         if(!printWindow) {
             alert('❌ O navegador bloqueou a janela de impressão. Permite pop-ups para esta página.');
             return;
         }
-
         printWindow.document.close();
-
-        const executarPrint = () => {
-            try {
-                printWindow.focus();
-                printWindow.print();
-            } catch(erro) {
-                console.error('Erro ao imprimir:', erro);
-                alert('❌ Não foi possível abrir a impressão neste navegador.');
-            }
-        };
-
-        // No computador, o Chrome/Edge pode abrir a pré-visualização antes de terminar
-        // de desenhar o HTML da janela about:blank. Este atraso evita folhas brancas.
-        if(printWindow.document.readyState === 'complete') {
-            setTimeout(executarPrint, atraso);
-        } else {
-            printWindow.onload = () => setTimeout(executarPrint, atraso);
-            setTimeout(executarPrint, atraso + 600);
-        }
+        setTimeout(() => { try { printWindow.focus(); printWindow.print(); } catch(e) { console.error(e); } }, atraso);
     }
 
     function imprimirEstruturas(id) {
@@ -2887,8 +2919,7 @@
                 </section>`;
         }).join('');
 
-        let printWindow = window.open('', '_blank');
-        printWindow.document.write(`<!DOCTYPE html>
+        imprimirHTMLWoltt(`<!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
@@ -2968,8 +2999,7 @@
         </footer>
     </main>
 </body>
-</html>`);
-        imprimirJanelaWoltt(printWindow, 900);
+</html>`, 900);
     }
 
     function imprimirProjeto(id) {
@@ -3066,8 +3096,7 @@
             lista.forEach(m => materialRows.push(`<tr><td>${escapeHtml(m.desc)}</td><td>${escapeHtml(m.unidade || 'un')}</td><td class="qtd">${m.qtd}</td></tr>`));
         });
 
-        let printWindow = window.open('', '_blank');
-        printWindow.document.write(`<!DOCTYPE html>
+        imprimirHTMLWoltt(`<!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
@@ -3193,8 +3222,7 @@
         </footer>
     </main>
 </body>
-</html>`);
-        imprimirJanelaWoltt(printWindow, 1000);
+</html>`, 1000);
     }
 
     function mostrarTab(tab) {
