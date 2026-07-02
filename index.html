@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>WOLTT · Gestão de Projetos Fotovoltaicos · v65</title>
+    <title>WOLTT · Gestão de Projetos Fotovoltaicos · v62</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -992,6 +992,83 @@
         @media (max-width: 1000px) { .triangulo-auto-grid { grid-template-columns: repeat(2, minmax(130px, 1fr)); } }
         @media (max-width: 620px) { .triangulo-auto-grid { grid-template-columns: 1fr; } }
 
+
+        /* === V65: listas por tipo para leituras de códigos de barras === */
+        .codigos-listas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: .75rem;
+            margin: 1rem 0;
+        }
+        .codigo-lista-card {
+            border: 1px solid #d7e7ef;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: .85rem 1rem;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(8,38,58,.045);
+            transition: .18s ease;
+        }
+        .codigo-lista-card:hover { transform: translateY(-2px); border-color: #9cc0d0; }
+        .codigo-lista-card.active { border-color: #2c7da0; box-shadow: 0 0 0 3px rgba(44,125,160,.12); }
+        .codigo-lista-card strong { display:block; color:#0b314a; font-size:.86rem; }
+        .codigo-lista-card span { color:#60758a; font-size:.76rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+        .codigo-lista-badge {
+            display:inline-flex; align-items:center; padding:.22rem .65rem; border-radius:999px;
+            background:#eef8fd; color:#0b5f7d; font-weight:900; font-size:.72rem;
+        }
+
+
+        /* === V66: modo Zebra/DataWedge para leitura assistida === */
+        .zebra-scan-panel {
+            display: grid;
+            grid-template-columns: minmax(220px, 1fr) auto auto;
+            gap: .75rem;
+            align-items: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            border: 1px solid #cfe0ea;
+            border-radius: 18px;
+            background: linear-gradient(180deg, #ffffff 0%, #f6fbfe 100%);
+            box-shadow: 0 10px 22px rgba(8,38,58,.045);
+        }
+        .zebra-status {
+            font-weight: 900;
+            color: #0b314a;
+            font-size: .86rem;
+        }
+        .zebra-status small {
+            display: block;
+            margin-top: .18rem;
+            color: #60758a;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+        .zebra-scan-panel.active {
+            border-color: #22a06b;
+            box-shadow: 0 0 0 4px rgba(34,160,107,.10), 0 12px 28px rgba(8,38,58,.08);
+        }
+        .zebra-reader-big {
+            min-height: 54px !important;
+            font-size: 1rem !important;
+            font-weight: 850 !important;
+            border-width: 2px !important;
+        }
+        @media (max-width: 760px) {
+            .zebra-scan-panel { grid-template-columns: 1fr; }
+        }
+
+
+
+        /* === V67: acesso por utilizador para gestão; leitura pública === */
+        .tab-public { box-shadow: inset 0 0 0 2px rgba(34,160,107,.18); }
+        .auth-chip { display:inline-flex; align-items:center; gap:.45rem; padding:.45rem .8rem; border-radius:999px; background:rgba(255,255,255,.14); color:#fff; font-weight:800; font-size:.76rem; }
+        .auth-panel { max-width:680px; margin:0 auto; padding:1.5rem; border:1px solid #dce9f0; border-radius:22px; background:#fff; box-shadow:0 12px 28px rgba(8,38,58,.06); }
+        .auth-panel h3 { color:#0b314a; margin-bottom:.6rem; }
+        .auth-users-table { margin-top:1rem; }
+        .public-note { background:#eefaf4; color:#1c6847; border-left:4px solid #22a06b; padding:.8rem 1rem; border-radius:1rem; margin-bottom:1rem; font-size:.8rem; }
+        .locked-note { background:#fff7e8; color:#8a4b0d; border-left:4px solid #f59e0b; padding:.8rem 1rem; border-radius:1rem; margin-bottom:1rem; font-size:.8rem; }
+
 </style>
 </head>
 <body>
@@ -999,11 +1076,14 @@
     <div class="header-top">
         <div class="logo-text">woltt<span>⚡</span><span style="font-size:0.8rem; margin-left:10px;">gestão fotovoltaica</span></div>
         <div class="btn-group">
-            <button class="btn btn-primary" onclick="novaProposta()">➕ Nova Proposta</button>
-            <button class="btn btn-secondary" onclick="criarPropostaManual()">✍️ Nova Manual</button>
-            <button class="btn btn-primary" onclick="carregarExcelCentralizado()">📊 Carregar Proteções</button>
-            <button class="btn btn-primary" onclick="exportarRelatorioGeral()">📈 Relatório Geral</button>
-            <button class="btn btn-secondary" onclick="exportarModeloExcel()">📥 Modelo Excel</button>
+            <button class="btn btn-primary gestor-only" onclick="novaProposta()">➕ Nova Proposta</button>
+            <button class="btn btn-secondary gestor-only" onclick="criarPropostaManual()">✍️ Nova Manual</button>
+            <button class="btn btn-primary gestor-only" onclick="carregarExcelCentralizado()">📊 Carregar Proteções</button>
+            <button class="btn btn-primary gestor-only" onclick="exportarRelatorioGeral()">📈 Relatório Geral</button>
+            <button class="btn btn-secondary gestor-only" onclick="exportarModeloExcel()">📥 Modelo Excel</button>
+            <span class="auth-chip" id="authEstadoChip">🔓 Leitura pública</span>
+            <button class="btn btn-success" id="btnLoginGestao" onclick="abrirLoginGestao()">🔐 Entrar Gestão</button>
+            <button class="btn btn-secondary gestor-only" id="btnLogoutGestao" onclick="logoutGestao()">🚪 Sair</button>
         </div>
     </div>
 </div>
@@ -1016,7 +1096,8 @@
 
 <div class="tabs-wrapper">
     <div class="tabs">
-        <button class="tab active" onclick="mostrarTab('projetos')">📋 Projetos</button>
+        <button class="tab active gestor-tab" onclick="mostrarTab('projetos')">🔐 Lista de Propostas</button>
+        <button class="tab tab-public" onclick="mostrarTab('codigosBarras')">🏷️ Picar Códigos</button>
         <button class="tab" onclick="mostrarTab('paineis')">🔆 Painéis</button>
         <button class="tab" onclick="mostrarTab('inversores')">⚡ Inversores</button>
         <button class="tab" onclick="mostrarTab('cabos')">🔌 Cabos</button>
@@ -1030,7 +1111,63 @@
     <div id="tabProjetos" class="tab-content active">
         <div class="card">
             <div class="card-header"><span>📋 Lista de Propostas</span><div><button class="btn btn-success btn-pequeno" onclick="carregarProjetoFicheiro()">📂 Carregar Projeto</button><button class="btn btn-secondary btn-pequeno" onclick="exportarTodosProjetos()">💾 Backup</button></div></div>
-            <div class="card-body"><div id="listaProjetos" class="projetos-lista"></div></div>
+            <div class="card-body"><div id="gestaoBloqueada" class="auth-panel" style="display:none;"><h3>🔐 Acesso restrito à gestão de propostas</h3><p>Para ver a lista de propostas, criar propostas ou alterar projetos, entra com um utilizador e senha autorizados.</p><div style="margin-top:1rem;"><button class="btn btn-primary" onclick="abrirLoginGestao()">Entrar na gestão</button><button class="btn btn-success" style="margin-left:.5rem;" onclick="mostrarTab('codigosBarras')">Ir para picar códigos</button></div></div><div id="listaProjetos" class="projetos-lista"></div></div>
+        </div>
+    </div>
+
+    <div id="tabCodigosBarras" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <span>🏷️ Leituras de Códigos de Barras por Proposta</span>
+                <div>
+                    <button class="btn btn-secondary btn-pequeno" onclick="exportarLeiturasCodigos()">💾 Exportar Leituras</button>
+                    <button class="btn btn-danger btn-pequeno" onclick="limparLeiturasPropostaAtual()">🗑️ Limpar Proposta</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="exemplo-excel">💡 Escolhe a proposta importada por JSON, seleciona a lista de destino (ex.: Painéis ou Inversores) e usa o botão <strong>Ativar Zebra</strong>. No Zebra, a app/DataWedge deve enviar a leitura como teclado, idealmente com Enter no fim.</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Proposta importada</label>
+                        <select id="selectPropostaCodigos" onchange="selecionarPropostaCodigos(this.value)"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Lista destino</label>
+                        <select id="selectListaCodigo" onchange="selecionarListaCodigo(this.value)">
+                            <option value="Painéis">🔆 Painéis</option>
+                            <option value="Inversores">⚡ Inversores</option>
+                            <option value="Baterias">🔋 Baterias</option>
+                            <option value="Estruturas">🏗️ Estruturas</option>
+                            <option value="Cabos">🔌 Cabos</option>
+                            <option value="Disjuntores/Diferenciais">⚡ Disjuntores/Diferenciais</option>
+                            <option value="Acessórios">📦 Acessórios</option>
+                            <option value="Outros">➕ Outros</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Leitor de código de barras</label>
+                        <input type="text" id="inputCodigoBarras" class="zebra-reader-big" placeholder="Ativa Zebra e faz a leitura..." autocomplete="off" inputmode="none" onkeydown="capturarCodigoBarras(event)" oninput="capturarCodigoBarrasAuto()">
+                    </div>
+                    <div class="form-group">
+                        <label>Observação opcional</label>
+                        <input type="text" id="inputCodigoObs" placeholder="Ex.: painel 1, inversor principal, material...">
+                    </div>
+                </div>
+                <div id="zebraScanPanel" class="zebra-scan-panel">
+                    <div class="zebra-status" id="zebraStatus">📲 Zebra pronto
+                        <small>Clica em “Ativar Zebra” e depois lê com o gatilho do equipamento. A leitura entra na lista selecionada.</small>
+                    </div>
+                    <button class="btn btn-success" onclick="ativarLeituraZebra()">📡 Ativar Zebra</button>
+                    <button class="btn btn-secondary" onclick="desativarLeituraZebra()">⏸️ Pausar</button>
+                </div>
+                <div id="codigosListasResumo" class="codigos-listas-grid"></div>
+                <div style="margin-top:1rem; overflow-x:auto;">
+                    <table class="data-table">
+                        <thead><tr><th>Lista</th><th>Data/Hora</th><th>Proposta</th><th>Cliente</th><th>Código interpretado</th><th>Observação</th><th>Ações</th></tr></thead>
+                        <tbody id="codigosBarrasBody"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
     <div id="tabPaineis" class="tab-content"><div class="card"><div class="card-header">🔆 Catálogo de Painéis</div><div class="card-body"><div class="exemplo-excel">💡 Folha <strong>"Paineis"</strong> - Colunas: <code>Modelo</code> e <code>Potência (W)</code></div><table class="data-table"><thead><tr><th>Modelo</th><th>Potência (W)</th></tr></thead><tbody id="paineisBody"></tbody></table><button class="btn btn-primary btn-pequeno" style="margin-top:12px" onclick="abrirAddPainel()">➕ Adicionar Painel Manual</button></div></div></div>
@@ -1040,6 +1177,9 @@
     <div id="tabEstruturas" class="tab-content"><div class="card"><div class="card-header">🏗️ Materiais de Estruturas</div><div class="card-body"><div class="exemplo-excel">💡 Folha <strong>"Estruturas"</strong> - Coluna: <code>Material</code></div><table class="data-table"><thead><tr><th>Material</th><th>Unidade</th><th>Qtd. Padrão</th></tr></thead><tbody id="estruturasBody"></tbody></table></div></div></div>
     <div id="tabAcessorios" class="tab-content"><div class="card"><div class="card-header">📦 Acessórios e Outros Materiais</div><div class="card-body"><div class="exemplo-excel">💡 Folha <strong>"Acessorios"</strong> - Coluna: <code>Material</code></div><table class="data-table"><thead><tr><th>Material</th><th>Unidade</th><th>Qtd. Padrão</th></tr></thead><tbody id="acessoriosBody"></tbody></table></div></div></div>
 </div>
+
+
+<div id="loginGestaoModal" class="modal"><div class="modal-content" style="max-width:720px"><span class="close-modal" onclick="fecharModal('loginGestaoModal')">&times;</span><div style="padding:1.5rem;"><h2 style="color:#0b314a;margin-bottom:1rem;">🔐 Acesso à Gestão de Propostas</h2><div class="locked-note">A leitura de códigos de barras fica livre para qualquer pessoa. A lista de propostas exige utilizador e senha. Só o administrador FilipeFrancisco pode criar novos utilizadores.</div><div class="form-grid"><div class="form-group"><label>Utilizador</label><input type="text" id="loginGestorUser" placeholder="Ex.: rita"></div><div class="form-group"><label>Senha</label><input type="password" id="loginGestorPass" placeholder="Senha" onkeydown="if(event.key==='Enter') loginGestao()"></div></div><div style="margin-top:1rem;display:flex;gap:.6rem;flex-wrap:wrap;"><button class="btn btn-primary" onclick="loginGestao()">Entrar</button><button class="btn btn-secondary" id="btnAdminUtilizadores" onclick="mostrarCriarUtilizador()">👑 Administração / utilizadores</button></div><div id="areaCriarUtilizador" style="display:none;margin-top:1.2rem;border-top:1px solid #dce9f0;padding-top:1rem;"><h3 style="color:#0b314a;margin-bottom:.7rem;">👥 Utilizadores autorizados</h3><div class="exemplo-excel">Área exclusiva do administrador. Só com o utilizador <strong>FilipeFrancisco</strong> e a palavra-passe definida é possível criar utilizadores para acederem à lista de propostas.</div><div class="form-grid"><div class="form-group"><label>Novo utilizador</label><input type="text" id="novoGestorUser" placeholder="Nome de utilizador"></div><div class="form-group"><label>Nova senha</label><input type="password" id="novoGestorPass" placeholder="Senha"></div><div class="form-group"><label>Acesso</label><input type="text" class="readonly-input" value="Autorizado por FilipeFrancisco" readonly></div></div><button class="btn btn-success" style="margin-top:.8rem;" onclick="criarUtilizadorGestao()">Criar utilizador</button><div id="listaUtilizadoresGestao" class="auth-users-table"></div></div></div></div></div>
 
 <div id="projetoModal" class="modal"><div class="modal-content"><span class="close-modal" onclick="fecharModal('projetoModal')">&times;</span><div id="projetoFormContent"></div></div></div>
 <div id="addPainelModal" class="modal"><div class="modal-content" style="max-width:500px"><span class="close-modal" onclick="fecharModal('addPainelModal')">&times;</span><h2>➕ Adicionar Painel</h2><div class="form-group"><label>Modelo:</label><input type="text" id="novoPainelModelo" placeholder="Ex: AIKO 550W"></div><div class="form-group"><label>Potência (W):</label><input type="number" id="novoPainelPotencia" value="550"></div><div style="margin-top:20px;"><button class="btn btn-primary" onclick="confirmarAddPainel()">Adicionar</button></div></div></div>
@@ -1054,6 +1194,14 @@
     let estruturasFromExcel = [];
     let acessoriosFromExcel = [];
     let currentProjetoId = null;
+    let leiturasCodigosBarras = {};
+    let propostaCodigosSelecionada = '';
+    let listaCodigoSelecionada = 'Painéis';
+    let zebraLeituraAtiva = false;
+    let zebraAutoTimer = null;
+    let sessaoGestao = null;
+    const ADMIN_GESTAO_USER = "FilipeFrancisco";
+    const ADMIN_GESTAO_PASS = "Woltt_2022";
 
     // Opções estáticas
     const opcoesSmartGuard = ["Huawei SMARTGUARD-63A-S0", "Huawei SMARTGUARD-63A-T0", "Huawei SMARTGUARD-63A-S0 + T0", "Huawei SMARTGUARD-125A-S0", "Huawei SMARTGUARD-125A-T0"];
@@ -1212,6 +1360,7 @@
         localStorage.setItem('woltt_disjuntores', JSON.stringify(disjuntoresDisponiveis));
         localStorage.setItem('woltt_estruturas', JSON.stringify(estruturasFromExcel));
         localStorage.setItem('woltt_acessorios', JSON.stringify(acessoriosFromExcel));
+        localStorage.setItem('woltt_leituras_codigos_barras', JSON.stringify(leiturasCodigosBarras));
     }
 
     function loadData() {
@@ -1238,6 +1387,8 @@
         const disj = localStorage.getItem('woltt_disjuntores'); if(disj) disjuntoresDisponiveis = JSON.parse(disj); else disjuntoresDisponiveis = [];
         const est = localStorage.getItem('woltt_estruturas'); if(est) estruturasFromExcel = JSON.parse(est); else estruturasFromExcel = [];
         const ace = localStorage.getItem('woltt_acessorios'); if(ace) acessoriosFromExcel = JSON.parse(ace); else acessoriosFromExcel = [];
+        const leiturasSaved = localStorage.getItem('woltt_leituras_codigos_barras');
+        if(leiturasSaved) { try { leiturasCodigosBarras = JSON.parse(leiturasSaved) || {}; } catch(e) { leiturasCodigosBarras = {}; } }
 
         if(projetos.length === 0) {
             projetos.push({
@@ -1255,6 +1406,7 @@
         renderProjetos();
         atualizarStats();
         renderTabelas();
+        renderCodigosBarras();
     }
 
     function renderTabelas() {
@@ -1284,6 +1436,7 @@
             </div>`;
         }).join('');
         document.getElementById('listaProjetos').innerHTML = html || '<div style="padding:2rem;text-align:center">Nenhum projeto. Clique "Nova Proposta"</div>';
+        renderCodigosBarras();
     }
 
     function atualizarStats() {
@@ -1775,6 +1928,283 @@
             });
         };
         input.click();
+    }
+
+
+    // ==================== ACESSO À GESTÃO DE PROPOSTAS ====================
+    function getUtilizadoresGestao() {
+        try { return JSON.parse(localStorage.getItem('woltt_utilizadores_gestao') || '[]') || []; } catch(e) { return []; }
+    }
+    function setUtilizadoresGestao(users) { localStorage.setItem('woltt_utilizadores_gestao', JSON.stringify(users || [])); }
+    function getSessaoGestao() {
+        try { return JSON.parse(sessionStorage.getItem('woltt_sessao_gestao') || 'null'); } catch(e) { return null; }
+    }
+    function isGestaoAutenticada() { sessaoGestao = getSessaoGestao(); return !!(sessaoGestao && sessaoGestao.user); }
+    function isAdminGestao() { sessaoGestao = getSessaoGestao(); return !!(sessaoGestao && sessaoGestao.role === 'admin'); }
+    function abrirLoginGestao() {
+        document.getElementById('loginGestaoModal').style.display = 'block';
+        const area = document.getElementById('areaCriarUtilizador');
+        if(area && !isAdminGestao()) area.style.display = 'none';
+        renderUtilizadoresGestao();
+        setTimeout(() => document.getElementById('loginGestorUser')?.focus(), 80);
+    }
+    function mostrarCriarUtilizador() {
+        if(!isAdminGestao()) {
+            const user = String(document.getElementById('loginGestorUser')?.value || '').trim();
+            const pass = String(document.getElementById('loginGestorPass')?.value || '');
+            if(user === ADMIN_GESTAO_USER && pass === ADMIN_GESTAO_PASS) {
+                sessionStorage.setItem('woltt_sessao_gestao', JSON.stringify({ user, role: 'admin', data: new Date().toISOString() }));
+                atualizarEstadoGestao();
+            } else {
+                alert('Área exclusiva do administrador. Introduz FilipeFrancisco e a respetiva palavra-passe para criar utilizadores.');
+                return;
+            }
+        }
+        const area = document.getElementById('areaCriarUtilizador');
+        if(area) area.style.display = 'block';
+        renderUtilizadoresGestao();
+    }
+    function loginGestao() {
+        const user = String(document.getElementById('loginGestorUser')?.value || '').trim();
+        const pass = String(document.getElementById('loginGestorPass')?.value || '');
+        const users = getUtilizadoresGestao();
+        const admin = (user === ADMIN_GESTAO_USER && pass === ADMIN_GESTAO_PASS);
+        const gestor = users.some(u => u.user === user && u.pass === pass);
+        if(!admin && !gestor) { alert('Utilizador ou senha inválidos.'); return; }
+        sessionStorage.setItem('woltt_sessao_gestao', JSON.stringify({ user, role: admin ? 'admin' : 'gestor', data: new Date().toISOString() }));
+        fecharModal('loginGestaoModal');
+        atualizarEstadoGestao();
+        mostrarTab('projetos');
+    }
+    function logoutGestao() {
+        sessionStorage.removeItem('woltt_sessao_gestao');
+        sessaoGestao = null;
+        atualizarEstadoGestao();
+        mostrarTab('codigosBarras');
+    }
+    function criarUtilizadorGestao() {
+        if(!isAdminGestao()) { alert('Só o administrador FilipeFrancisco pode criar utilizadores.'); return; }
+        const user = String(document.getElementById('novoGestorUser')?.value || '').trim();
+        const pass = String(document.getElementById('novoGestorPass')?.value || '');
+        const users = getUtilizadoresGestao();
+        if(!user || !pass) { alert('Indica utilizador e senha.'); return; }
+        if(user === ADMIN_GESTAO_USER || users.some(u => u.user === user)) { alert('Esse utilizador já existe.'); return; }
+        users.push({ user, pass, criadoEm: new Date().toLocaleString('pt-PT') });
+        setUtilizadoresGestao(users);
+        document.getElementById('novoGestorUser').value = '';
+        document.getElementById('novoGestorPass').value = '';
+        renderUtilizadoresGestao();
+        alert('Utilizador criado. Já pode entrar na lista de propostas.');
+    }
+    function removerUtilizadorGestao(user) {
+        if(!isAdminGestao()) { alert('Só o administrador pode remover utilizadores.'); return; }
+        if(!confirm('Remover este utilizador?')) return;
+        setUtilizadoresGestao(getUtilizadoresGestao().filter(u => u.user !== user));
+        renderUtilizadoresGestao();
+    }
+    function renderUtilizadoresGestao() {
+        const el = document.getElementById('listaUtilizadoresGestao');
+        if(!el) return;
+        if(!isAdminGestao()) { el.innerHTML = ''; return; }
+        const users = getUtilizadoresGestao();
+        el.innerHTML = users.length ? `<table class="data-table"><thead><tr><th>Utilizador</th><th>Criado em</th><th>Ações</th></tr></thead><tbody>${users.map(u => `<tr><td><strong>${escapeHtml(u.user)}</strong></td><td>${escapeHtml(u.criadoEm || '')}</td><td><button class="btn btn-danger btn-pequeno" onclick="removerUtilizadorGestao('${escapeHtml(u.user)}')">Remover</button></td></tr>`).join('')}</tbody></table>` : '<div style="padding:.8rem;color:#60758a;">Ainda não existem utilizadores.</div>';
+    }
+    function atualizarEstadoGestao() {
+        const autenticado = isGestaoAutenticada();
+        const admin = isAdminGestao();
+        document.querySelectorAll('.gestor-only').forEach(el => el.style.display = autenticado ? '' : 'none');
+        const chip = document.getElementById('authEstadoChip');
+        if(chip) chip.innerHTML = autenticado ? `🔐 Gestão: ${escapeHtml(sessaoGestao.user)}${admin ? ' · Admin' : ''}` : '🔓 Leitura pública';
+        const btnLogin = document.getElementById('btnLoginGestao');
+        const btnLogout = document.getElementById('btnLogoutGestao');
+        if(btnLogin) btnLogin.style.display = autenticado ? 'none' : '';
+        if(btnLogout) btnLogout.style.display = autenticado ? '' : 'none';
+        const lista = document.getElementById('listaProjetos');
+        const bloqueada = document.getElementById('gestaoBloqueada');
+        if(lista) lista.style.display = autenticado ? '' : 'none';
+        if(bloqueada) bloqueada.style.display = autenticado ? 'none' : '';
+        const area = document.getElementById('areaCriarUtilizador');
+        if(area && !admin) area.style.display = 'none';
+    }
+    function exigirGestao() {
+        if(isGestaoAutenticada()) return true;
+        abrirLoginGestao();
+        return false;
+    }
+
+
+    function getProjetosImportadosJSON() {
+        const importados = projetos.filter(p => p.parametrosImportados || p.potenciaWpImportada || p.estruturasImportadas || p.NUMERO_PROPOSTA);
+        return importados.length ? importados : projetos;
+    }
+
+    const listasCodigosBarras = ["Painéis", "Inversores", "Baterias", "Estruturas", "Cabos", "Disjuntores/Diferenciais", "Acessórios", "Outros"];
+
+    function selecionarListaCodigo(lista) {
+        listaCodigoSelecionada = lista || 'Painéis';
+        const select = document.getElementById('selectListaCodigo');
+        if(select) select.value = listaCodigoSelecionada;
+        renderCodigosBarras();
+        setTimeout(() => document.getElementById('inputCodigoBarras')?.focus(), 50);
+    }
+
+    function renderCodigosBarras() {
+        const select = document.getElementById('selectPropostaCodigos');
+        const tbody = document.getElementById('codigosBarrasBody');
+        const resumo = document.getElementById('codigosListasResumo');
+        const selectLista = document.getElementById('selectListaCodigo');
+        if(!select || !tbody) return;
+        if(selectLista) selectLista.value = listaCodigoSelecionada;
+
+        const lista = getProjetosImportadosJSON();
+        if(!propostaCodigosSelecionada && lista.length) propostaCodigosSelecionada = String(lista[0].id);
+        if(propostaCodigosSelecionada && !lista.some(p => String(p.id) === String(propostaCodigosSelecionada)) && lista.length) {
+            propostaCodigosSelecionada = String(lista[0].id);
+        }
+
+        select.innerHTML = lista.map(p => `<option value="${p.id}" ${String(p.id) === String(propostaCodigosSelecionada) ? 'selected' : ''}>${escapeHtml(p.nProposta || '-') } - ${escapeHtml(p.cliente || 'Sem cliente')}</option>`).join('');
+
+        if(!lista.length) {
+            if(resumo) resumo.innerHTML = '';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:1.5rem;">Ainda não existem propostas importadas. Usa “Nova Proposta” ou “Carregar Projeto”.</td></tr>';
+            return;
+        }
+
+        const projeto = projetos.find(p => String(p.id) === String(propostaCodigosSelecionada));
+        const leituras = leiturasCodigosBarras[propostaCodigosSelecionada] || [];
+        const contagens = {};
+        listasCodigosBarras.forEach(l => contagens[l] = 0);
+        leituras.forEach(l => {
+            const lista = l.lista || 'Outros';
+            contagens[lista] = (contagens[lista] || 0) + 1;
+        });
+        if(resumo) {
+            resumo.innerHTML = listasCodigosBarras.map(lista => `
+                <div class="codigo-lista-card ${lista === listaCodigoSelecionada ? 'active' : ''}" onclick="selecionarListaCodigo('${escapeHtml(lista)}')">
+                    <strong>${escapeHtml(lista)}</strong>
+                    <span>${contagens[lista] || 0} leitura(s)</span>
+                </div>
+            `).join('');
+        }
+        const leiturasFiltradas = leituras.filter(l => (l.lista || 'Outros') === listaCodigoSelecionada);
+        tbody.innerHTML = leiturasFiltradas.slice().reverse().map(l => `<tr>
+            <td><span class="codigo-lista-badge">${escapeHtml(l.lista || 'Outros')}</span></td>
+            <td>${escapeHtml(l.dataHora || '')}</td>
+            <td><strong>${escapeHtml(projeto?.nProposta || '')}</strong></td>
+            <td>${escapeHtml(projeto?.cliente || '')}</td>
+            <td><strong>${escapeHtml(l.codigo || '')}</strong></td>
+            <td>${escapeHtml(l.obs || '')}</td>
+            <td><button class="btn btn-danger btn-pequeno" onclick="apagarLeituraCodigo('${propostaCodigosSelecionada}', '${l.id}')">Apagar</button></td>
+        </tr>`).join('') || `<tr><td colspan="7" style="text-align:center;padding:1.5rem;">Sem leituras na lista ${escapeHtml(listaCodigoSelecionada)} para esta proposta.</td></tr>`;
+    }
+
+    function selecionarPropostaCodigos(id) {
+        propostaCodigosSelecionada = String(id || '');
+        renderCodigosBarras();
+        setTimeout(() => document.getElementById('inputCodigoBarras')?.focus(), 50);
+    }
+
+    function atualizarEstadoZebra(texto, detalhe, ativo) {
+        const panel = document.getElementById('zebraScanPanel');
+        const status = document.getElementById('zebraStatus');
+        if(panel) panel.classList.toggle('active', !!ativo);
+        if(status) status.innerHTML = `${texto}<small>${detalhe || ''}</small>`;
+    }
+
+    function ativarLeituraZebra() {
+        zebraLeituraAtiva = true;
+        const input = document.getElementById('inputCodigoBarras');
+        if(input) {
+            input.value = '';
+            input.focus();
+            input.select();
+        }
+        atualizarEstadoZebra('🟢 Zebra ativo — à espera da leitura', `Destino: ${listaCodigoSelecionada || 'Outros'}. Usa o gatilho do Zebra/DataWedge.`, true);
+    }
+
+    function desativarLeituraZebra() {
+        zebraLeituraAtiva = false;
+        if(zebraAutoTimer) clearTimeout(zebraAutoTimer);
+        atualizarEstadoZebra('📲 Zebra pausado', 'Clica em “Ativar Zebra” quando quiseres voltar a ler códigos.', false);
+    }
+
+    function guardarCodigoBarrasAtual() {
+        const input = document.getElementById('inputCodigoBarras');
+        const obsInput = document.getElementById('inputCodigoObs');
+        const codigo = String(input?.value || '').trim();
+        if(!codigo) return false;
+        if(!propostaCodigosSelecionada) {
+            alert('Seleciona primeiro uma proposta.');
+            return false;
+        }
+        const projeto = projetos.find(p => String(p.id) === String(propostaCodigosSelecionada));
+        if(!projeto) {
+            alert('Proposta não encontrada.');
+            return false;
+        }
+        if(!leiturasCodigosBarras[propostaCodigosSelecionada]) leiturasCodigosBarras[propostaCodigosSelecionada] = [];
+        leiturasCodigosBarras[propostaCodigosSelecionada].push({
+            id: String(gerarId()),
+            lista: listaCodigoSelecionada || 'Outros',
+            codigo,
+            obs: String(obsInput?.value || '').trim(),
+            dataHora: new Date().toLocaleString('pt-PT')
+        });
+        if(input) input.value = '';
+        if(obsInput) obsInput.value = '';
+        saveData();
+        renderCodigosBarras();
+        atualizarEstadoZebra('✅ Leitura guardada', `Código guardado em ${listaCodigoSelecionada || 'Outros'}. Pronto para a próxima leitura.`, true);
+        setTimeout(() => input?.focus(), 50);
+        return true;
+    }
+
+    function capturarCodigoBarras(evento) {
+        if(evento.key !== 'Enter') return;
+        evento.preventDefault();
+        guardarCodigoBarrasAtual();
+    }
+
+    function capturarCodigoBarrasAuto() {
+        if(!zebraLeituraAtiva) return;
+        if(zebraAutoTimer) clearTimeout(zebraAutoTimer);
+        zebraAutoTimer = setTimeout(() => {
+            const input = document.getElementById('inputCodigoBarras');
+            const codigo = String(input?.value || '').trim();
+            if(codigo.length >= 4) guardarCodigoBarrasAtual();
+        }, 700);
+    }
+
+    function apagarLeituraCodigo(propostaId, leituraId) {
+        if(!leiturasCodigosBarras[propostaId]) return;
+        leiturasCodigosBarras[propostaId] = leiturasCodigosBarras[propostaId].filter(l => String(l.id) !== String(leituraId));
+        saveData();
+        renderCodigosBarras();
+    }
+
+    function limparLeiturasPropostaAtual() {
+        if(!propostaCodigosSelecionada) return;
+        const projeto = projetos.find(p => String(p.id) === String(propostaCodigosSelecionada));
+        if(!confirm(`Limpar todas as leituras da proposta ${projeto?.nProposta || ''}?`)) return;
+        leiturasCodigosBarras[propostaCodigosSelecionada] = [];
+        saveData();
+        renderCodigosBarras();
+    }
+
+    function exportarLeiturasCodigos() {
+        let linhas = [['Nº Proposta','Cliente','Lista','Data/Hora','Código','Observação']];
+        Object.keys(leiturasCodigosBarras).forEach(pid => {
+            const projeto = projetos.find(p => String(p.id) === String(pid)) || {};
+            (leiturasCodigosBarras[pid] || []).forEach(l => {
+                linhas.push([projeto.nProposta || '', projeto.cliente || '', l.lista || 'Outros', l.dataHora || '', l.codigo || '', l.obs || '']);
+            });
+        });
+        const csv = linhas.map(l => l.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+        let blob = new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8'});
+        let a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `woltt_codigos_barras_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
     }
 
     function exportarRelatorioGeral() {
@@ -2837,67 +3267,6 @@
             </div>`;
     }
 
-
-    function imprimirHTMLWoltt(html, atraso = 700) {
-        // Impressão robusta para versão online: evita pop-ups about:blank e imprime por iframe invisível.
-        // Em alguns alojamentos, window.open('', '_blank') abre mas o Chrome imprime a página antes do HTML ficar pronto.
-        const iframeAntigo = document.getElementById('woltt_print_iframe');
-        if(iframeAntigo) iframeAntigo.remove();
-
-        const iframe = document.createElement('iframe');
-        iframe.id = 'woltt_print_iframe';
-        iframe.style.position = 'fixed';
-        iframe.style.right = '0';
-        iframe.style.bottom = '0';
-        iframe.style.width = '0';
-        iframe.style.height = '0';
-        iframe.style.border = '0';
-        iframe.style.opacity = '0';
-        iframe.setAttribute('aria-hidden', 'true');
-        document.body.appendChild(iframe);
-
-        const doc = iframe.contentWindow.document;
-        doc.open();
-        doc.write(html);
-        doc.close();
-
-        const executarPrint = () => {
-            try {
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
-                setTimeout(() => iframe.remove(), 60000);
-            } catch(erro) {
-                console.error('Erro ao imprimir por iframe:', erro);
-                // Fallback para navegadores que bloqueiam impressão em iframe.
-                const w = window.open('', '_blank');
-                if(!w) {
-                    alert('❌ O navegador bloqueou a impressão. Permite pop-ups para esta página ou usa Ctrl+P depois de abrir o relatório.');
-                    return;
-                }
-                w.document.open();
-                w.document.write(html);
-                w.document.close();
-                setTimeout(() => {
-                    try { w.focus(); w.print(); } catch(e) { alert('❌ Não foi possível abrir a impressão neste navegador.'); }
-                }, atraso + 500);
-            }
-        };
-
-        iframe.onload = () => setTimeout(executarPrint, atraso);
-        // Segurança extra para alojamentos onde o evento onload do iframe não dispara.
-        setTimeout(executarPrint, atraso + 1200);
-    }
-
-    function imprimirJanelaWoltt(printWindow, atraso = 900) {
-        // Mantida apenas por compatibilidade com versões antigas.
-        if(!printWindow) {
-            alert('❌ O navegador bloqueou a janela de impressão. Permite pop-ups para esta página.');
-            return;
-        }
-        printWindow.document.close();
-        setTimeout(() => { try { printWindow.focus(); printWindow.print(); } catch(e) { console.error(e); } }, atraso);
-    }
-
     function imprimirEstruturas(id) {
         let proj = projetos.find(p=>p.id===id);
         if(!proj) { alert('Projeto não encontrado.'); return; }
@@ -2919,7 +3288,8 @@
                 </section>`;
         }).join('');
 
-        imprimirHTMLWoltt(`<!DOCTYPE html>
+        let printWindow = window.open('', '_blank');
+        printWindow.document.write(`<!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
@@ -2964,11 +3334,10 @@
         td:last-child, th:last-child { text-align: right; font-weight: 800; }
         .total-row td { background: #f4f9fc; color: #08263a; font-weight: 900; }
         .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #dce9f0; display: flex; justify-content: space-between; color: #60758a; font-size: 10px; }
-        @page { size: A4 portrait; margin: 10mm; }
         @media print {
-            html, body { width: 210mm; min-height: 297mm; background: #fff !important; margin: 0 !important; padding: 0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .page { width: 190mm !important; min-height: auto !important; margin: 0 auto !important; padding: 0 !important; box-shadow: none !important; }
-            .print-section, .tri-print-card { break-inside: avoid; page-break-inside: avoid; }
+            body { background: #fff; }
+            .page { width: auto; min-height: auto; margin: 0; padding: 10mm; }
+            .print-section, .tri-print-card { break-inside: avoid; }
         }
     </style>
 </head>
@@ -2999,7 +3368,10 @@
         </footer>
     </main>
 </body>
-</html>`, 900);
+</html>`);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => printWindow.print(), 700);
     }
 
     function imprimirProjeto(id) {
@@ -3096,7 +3468,8 @@
             lista.forEach(m => materialRows.push(`<tr><td>${escapeHtml(m.desc)}</td><td>${escapeHtml(m.unidade || 'un')}</td><td class="qtd">${m.qtd}</td></tr>`));
         });
 
-        imprimirHTMLWoltt(`<!DOCTYPE html>
+        let printWindow = window.open('', '_blank');
+        printWindow.document.write(`<!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
@@ -3135,11 +3508,10 @@
         .category-row td { background: #f4f9fc; color: #08263a; font-weight: 900; text-transform: uppercase; }
         .empty-text { margin: 0; padding: 10px; border: 1px dashed #cbdbe6; border-radius: 10px; color: #60758a; }
         .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #dce9f0; display: flex; justify-content: space-between; color: #60758a; font-size: 10px; }
-        @page { size: A4 portrait; margin: 10mm; }
         @media print {
-            html, body { width: 210mm; min-height: 297mm; background: #fff !important; margin: 0 !important; padding: 0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .page { width: 190mm !important; min-height: auto !important; margin: 0 auto !important; padding: 0 !important; box-shadow: none !important; }
-            .print-section { break-inside: avoid; page-break-inside: avoid; }
+            body { background: #fff; }
+            .page { width: auto; min-height: auto; margin: 0; padding: 10mm; }
+            .print-section { break-inside: avoid; }
         }
     </style>
 </head>
@@ -3222,20 +3594,57 @@
         </footer>
     </main>
 </body>
-</html>`, 1000);
+</html>`);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => printWindow.print(), 900);
     }
 
     function mostrarTab(tab) {
+        if(tab === 'projetos' && !isGestaoAutenticada()) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('tabProjetos').classList.add('active');
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('.gestor-tab')?.classList.add('active');
+            atualizarEstadoGestao();
+            abrirLoginGestao();
+            return;
+        }
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add('active');
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         if(event && event.target) event.target.classList.add('active');
+        else document.querySelector(`.tab[onclick*="${tab}"]`)?.classList.add('active');
+        atualizarEstadoGestao();
+        if(tab === 'codigosBarras') setTimeout(() => document.getElementById('inputCodigoBarras')?.focus(), 80);
     }
     
     function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
     
     window.onclick = function(e) { if(e.target.classList.contains('modal')) e.target.style.display = 'none'; };
     
+
+
+    // Proteger ações de gestão mesmo que sejam chamadas por botões antigos.
+    const _novaProposta = novaProposta;
+    const _criarPropostaManual = criarPropostaManual;
+    const _abrirProjeto = abrirProjeto;
+    const _apagarProjeto = apagarProjeto;
+    const _salvarProjeto = salvarProjeto;
+    const _carregarProjetoFicheiro = carregarProjetoFicheiro;
+    const _exportarTodosProjetos = exportarTodosProjetos;
+    const _exportarRelatorioGeral = exportarRelatorioGeral;
+    const _carregarExcelCentralizado = carregarExcelCentralizado;
+    novaProposta = function(){ if(exigirGestao()) return _novaProposta.apply(this, arguments); };
+    criarPropostaManual = function(){ if(exigirGestao()) return _criarPropostaManual.apply(this, arguments); };
+    abrirProjeto = function(){ if(exigirGestao()) return _abrirProjeto.apply(this, arguments); };
+    apagarProjeto = function(){ if(exigirGestao()) return _apagarProjeto.apply(this, arguments); };
+    salvarProjeto = function(){ if(exigirGestao()) return _salvarProjeto.apply(this, arguments); };
+    carregarProjetoFicheiro = function(){ if(exigirGestao()) return _carregarProjetoFicheiro.apply(this, arguments); };
+    exportarTodosProjetos = function(){ if(exigirGestao()) return _exportarTodosProjetos.apply(this, arguments); };
+    exportarRelatorioGeral = function(){ if(exigirGestao()) return _exportarRelatorioGeral.apply(this, arguments); };
+    carregarExcelCentralizado = function(){ if(exigirGestao()) return _carregarExcelCentralizado.apply(this, arguments); };
+
     // Expor funções globalmente
     window.novaProposta = novaProposta;
     window.criarPropostaManual = criarPropostaManual;
@@ -3248,11 +3657,27 @@
     window.exportarModeloExcel = exportarModeloExcel;
     window.carregarExcelCentralizado = carregarExcelCentralizado;
     window.carregarProjetoFicheiro = carregarProjetoFicheiro;
+    window.renderCodigosBarras = renderCodigosBarras;
+    window.selecionarListaCodigo = selecionarListaCodigo;
+    window.selecionarPropostaCodigos = selecionarPropostaCodigos;
+    window.capturarCodigoBarras = capturarCodigoBarras;
+    window.apagarLeituraCodigo = apagarLeituraCodigo;
+    window.limparLeiturasPropostaAtual = limparLeiturasPropostaAtual;
+    window.exportarLeiturasCodigos = exportarLeiturasCodigos;
+    window.ativarLeituraZebra = ativarLeituraZebra;
+    window.desativarLeituraZebra = desativarLeituraZebra;
+    window.capturarCodigoBarrasAuto = capturarCodigoBarrasAuto;
     window.importarParametrosJSON = importarParametrosJSON;
     window.abrirAddPainel = abrirAddPainel;
     window.confirmarAddPainel = confirmarAddPainel;
     window.mostrarTab = mostrarTab;
     window.fecharModal = fecharModal;
+    window.abrirLoginGestao = abrirLoginGestao;
+    window.loginGestao = loginGestao;
+    window.logoutGestao = logoutGestao;
+    window.mostrarCriarUtilizador = mostrarCriarUtilizador;
+    window.criarUtilizadorGestao = criarUtilizadorGestao;
+    window.removerUtilizadorGestao = removerUtilizadorGestao;
     window.salvarProjeto = salvarProjeto;
     window.calcularPotenciaTotal = calcularPotenciaTotal;
     window.atualizarPotenciaPainel = atualizarPotenciaPainel;
@@ -3277,6 +3702,8 @@
     window.atualizarQtdDiferencial = atualizarQtdDiferencial;
     
     loadData();
+    atualizarEstadoGestao();
+    mostrarTab(isGestaoAutenticada() ? 'projetos' : 'codigosBarras');
 </script>
 </body>
 </html>
